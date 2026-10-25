@@ -48,9 +48,11 @@ labels: ["prd"]
 
 ## Assumptions
 
-| ID | Assumption | Why | Risk if wrong |
-| --- | --- | --- | --- |
-| A-1 |  |  |  |
+<!-- How an autonomous run stays honest and unblocked. Empty here usually means a guess happened silently. -->
+
+| ID | Assumption | Basis | Confidence | Risk if wrong |
+| --- | --- | --- | --- | --- |
+| A-1 |  | example app / docs / practice | high / medium / low |  |
 
 ## Open questions
 
