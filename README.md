@@ -4,6 +4,11 @@ Issue-tracker only — this repo holds **no code**. Every requirement lives here
 complete PRD, produced by `/autonomous-wayfinder` or written by hand from the
 [PRD template](.github/ISSUE_TEMPLATE/prd.md).
 
+Implementation is driven from this tracker by the **`github-orchestrator`** agent: it picks
+`ready-for-agent` stories, opens branches and PRs in
+[prakja/ncert-math-practice](https://github.com/prakja/ncert-math-practice), and closes a
+story only when the PR is merged and CI is green.
+
 ## Shape of a PRD
 
 ```
@@ -43,6 +48,10 @@ PRD issue                      label: prd
 | `assumption` | Stated without evidence; must be confirmed |
 | `open-question` | Unresolved; the PRD records the default used |
 | `ready-for-agent` | Fully specified, safe for an AFK agent to implement |
+| `in-progress` | A worker is on it |
+| `in-review` | PR open, awaiting review or CI |
+| `blocked` | Cannot proceed; the blocker is named in a comment |
+| `ui` | Needs Playwright before/after evidence |
 | `wayfinder:map` | Planning map for an in-flight effort |
 | `wayfinder:research` | Research ticket |
 | `wayfinder:rea` | Reverse-engineering ticket (REA) |
