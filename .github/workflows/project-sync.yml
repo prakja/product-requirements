@@ -65,7 +65,7 @@ jobs:
           }
 
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
-            gh issue list --state all --limit 300 --json number --jq '.[].number' |
+            gh issue list --repo "$GITHUB_REPOSITORY" --state all --limit 300 --json number --jq '.[].number' |
               while read -r number; do sync_issue "$number"; done
           else
             sync_issue "$ISSUE_NUMBER"
