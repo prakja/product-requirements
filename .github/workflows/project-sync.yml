@@ -12,13 +12,13 @@ permissions:
 env:
   GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
   PROJECT_ID: PVT_kwHOBREXm84Bow7L
-  STAGE_FIELD_ID: PVTSSF_lAHOBREXm84Bow7LzhnPeXU
+  STATUS_FIELD_ID: PVTSSF_lAHOBREXm84Bow7LzhnPeUI
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Project issue Stage from labels and state
+      - name: Project issue Status from labels and state
         env:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
@@ -34,14 +34,14 @@ jobs:
             state=$(jq -r '.state' <<<"$json")
             reason=$(jq -r '.state_reason // ""' <<<"$json")
             if [ "$state" = "closed" ]; then
-              if [ "$reason" = "not_planned" ]; then option=f7fae5ba; else option=1958b755; fi
+              if [ "$reason" = "not_planned" ]; then option=4f9df6bb; else option=1787b6c2; fi
             else
               labels=$(jq -r '.labels[].name' <<<"$json")
-              if grep -qx blocked <<<"$labels"; then option=d5b7d57b
-              elif grep -qx in-review <<<"$labels"; then option=6c789327
-              elif grep -qx in-progress <<<"$labels"; then option=37a4fe8e
-              elif grep -qx ready-for-agent <<<"$labels"; then option=9a757b22
-              else option=91d698a0
+              if grep -qx blocked <<<"$labels"; then option=700cbe14
+              elif grep -qx in-review <<<"$labels"; then option=3f713bdc
+              elif grep -qx in-progress <<<"$labels"; then option=974affa4
+              elif grep -qx ready-for-agent <<<"$labels"; then option=931b92fc
+              else option=917aa3fd
               fi
             fi
 
@@ -53,9 +53,9 @@ jobs:
 
             gh api graphql \
               -f query='mutation($project:ID!,$item:ID!,$field:ID!,$option:String!){updateProjectV2ItemFieldValue(input:{projectId:$project,itemId:$item,fieldId:$field,value:{singleSelectOptionId:$option}}){projectV2Item{id}}}' \
-              -f project="$PROJECT_ID" -f item="$item" -f field="$STAGE_FIELD_ID" -f option="$option" >/dev/null
+              -f project="$PROJECT_ID" -f item="$item" -f field="$STATUS_FIELD_ID" -f option="$option" >/dev/null
 
-            echo "#$number -> Stage $option"
+            echo "#$number -> Status $option"
           }
 
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
