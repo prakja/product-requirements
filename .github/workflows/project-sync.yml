@@ -1,0 +1,72 @@
+# Labels are the source of truth; this workflow only projects them. Never write labels from here.
+name: project-sync
+
+on:
+  issues:
+    types: [opened, reopened, closed, labeled, unlabeled, assigned, unassigned]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+  PROJECT_OWNER: prakja
+  PROJECT_NUMBER: "1"
+  PROJECT_ID: PVT_kwHOBREXm84Bow7L
+  STAGE_FIELD_ID: PVTSSF_lAHOBREXm84Bow7LzhnPeXU
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Project issue Stage from labels and state
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+
+          # Closed and label state decide the column, in this priority order.
+          stage_option() {
+            local number="$1" json state reason labels
+            json=$(gh issue view "$number" --repo "$GITHUB_REPOSITORY" --json state,stateReason,labels)
+            state=$(jq -r '.state' <<<"$json")
+            reason=$(jq -r '.stateReason // ""' <<<"$json")
+            if [ "$state" = "CLOSED" ]; then
+              if [ "$reason" = "NOT_PLANNED" ]; then echo f7fae5ba; else echo 1958b755; fi
+              return
+            fi
+            labels=$(jq -r '.labels[].name' <<<"$json")
+            if grep -qx blocked <<<"$labels"; then echo d5b7d57b
+            elif grep -qx in-review <<<"$labels"; then echo 6c789327
+            elif grep -qx in-progress <<<"$labels"; then echo 37a4fe8e
+            elif grep -qx ready-for-agent <<<"$labels"; then echo 9a757b22
+            else echo 91d698a0
+            fi
+          }
+
+          sync_issue() {
+            local number="$1" url item option
+            url="https://github.com/$GITHUB_REPOSITORY/issues/$number"
+            if ! gh project item-add "$PROJECT_NUMBER" --owner "$PROJECT_OWNER" --url "$url" >/dev/null; then
+              # Already on the board is the normal case for labelled/closed events.
+              echo "#$number: item-add said it exists already, keeping the item"
+            fi
+            item=$(gh project item-list "$PROJECT_NUMBER" --owner "$PROJECT_OWNER" --limit 200 --format json \
+              --jq ".items[] | select(.content.number == $number) | .id")
+            if [ -z "$item" ]; then
+              echo "::error::issue #$number has no item on project $PROJECT_NUMBER"
+              return 1
+            fi
+            option=$(stage_option "$number")
+            gh project item-edit --id "$item" --project-id "$PROJECT_ID" \
+              --field-id "$STAGE_FIELD_ID" --single-select-option-id "$option"
+            echo "#$number -> Stage $option"
+          }
+
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            gh issue list --state all --limit 300 --json number --jq '.[].number' |
+              while read -r number; do sync_issue "$number"; done
+          else
+            sync_issue "$ISSUE_NUMBER"
+          fi
